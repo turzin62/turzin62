@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Doguinhos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        button {
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #ddd;
+        }
+
+        form {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            display: none; /* formularo */
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+
+        thead td {
+            font-weight: bold;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #ddd;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        tbody tr td img {
+            width: 75px;
+            height: 75px;
+            border-radius: 5px;
+        }
+
+        tbody tr td button {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        tbody tr td button:hover {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <script>
+        let dados = [];
+
+        // funcao para o formualrio aparecer
+        function exibirFormulario(doguinho = null) {
+            const formulario = document.getElementById("formulario");
+            formulario.style.display = "block";
+            if (doguinho) {
+                document.getElementById("doguinho").value = doguinho.doguinho;
+                document.getElementById("dono").value = doguinho.dono;
+                document.getElementById("telefone").value = doguinho.telefone;
+                document.getElementById("email").value = doguinho.email;
+                document.getElementById("imagen").value = doguinho.imagem;
+                document.getElementById("formulario").onsubmit = (e) => atualizarDoguinho(e, doguinho.id);
+            } else {
+                document.getElementById("formulario").onsubmit = (e) => adicionarDoguinho(e);
+            }
+        }
+
+        // Funcao para esconder o formulario
+        function ocultarFormulario() {
+            const formulario = document.getElementById("formulario");
+            formulario.style.display = "none";
+        }
+
+        // Funcao para carrgar api/localstorage
+        function carregarTabela() {
+            // api dentro do locastorege
+            const tabelaCorpo = document.getElementById("tabela-corpo");
+            tabelaCorpo.innerHTML = '';
+
+            dados = JSON.parse(localStorage.getItem("doguinhos")) || [];
+
+            dados.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><img src="${item.imagem}" alt="dog"/></td>
+                    <td>${item.doguinho}</td>
+                    <td>${item.dono}</td>
+                    <td>${item.telefone}</td>
+                    <td>${item.email}</td>
+                    <td>
+                        <button onclick="editarDoguinho(${index})">Editar</button>
+                        <button onclick="deletarDoguinho(${index})">Excluir</button>
+                    </td>
+                `;
+                tabelaCorpo.appendChild(tr);
+            });
+        }
+
+        // Adicionar um novo doguinho
+function adicionarDoguinho(event) {
+    event.preventDefault();
+
+    // adicionar os dog
+    const novoDoguinho = {
+        doguinho: document.getElementById("doguinho").value,
+        dono: document.getElementById("dono").value,
+        telefone: document.getElementById("telefone").value,
+        email: document.getElementById("email").value
+    };
+
+    // pra uma imagem aleatoria aparecer
+    fetch('https://dog.ceo/api/breeds/image/random')
+        .then(response => response.json())
+        .then(data => {
+            // add imagem pela api
+            novoDoguinho.imagem = data.message;
+
+            // salva tudo no localstorage
+            dados.push(novoDoguinho);
+            localStorage.setItem("doguinhos", JSON.stringify(dados));
+            carregarTabela();
+            ocultarFormulario();
+        })
+        .catch(error => {
+            console.error("Erro ao obter imagem:", error);
+            alert("Não foi possível obter uma imagem de cachorro no momento.");
+        });
+}
+
+        // editar um ja existente
+        function editarDoguinho(index) {
+            const doguinho = dados[index];
+            doguinho.id = index;
+            exibirFormulario(doguinho);
+        }
+
+        // att info do dog
+        function atualizarDoguinho(event, id) {
+            event.preventDefault();
+
+            const doguinhoAtualizado = {
+                doguinho: document.getElementById("doguinho").value,
+                dono: document.getElementById("dono").value,
+                telefone: document.getElementById("telefone").value,
+                email: document.getElementById("email").value,
+                imagem: document.getElementById("imagen").value
+            };
+
+            dados[id] = doguinhoAtualizado;
+            localStorage.setItem("doguinhos", JSON.stringify(dados));
+            carregarTabela();
+            ocultarFormulario();
+        }
+
+        // apagar o cao
+        function deletarDoguinho(index) {
+            if (confirm("Tem certeza que deseja excluir?")) {
+                dados.splice(index, 1);
+                localStorage.setItem("doguinhos", JSON.stringify(dados));
+                carregarTabela();
+            }
+        }
+
+        // carregar tablea
+        window.onload = carregarTabela;
+    </script>
+</head>
+<body>
+    <h1>Lista de Doguinhos e seus Senhores!</h1>
+    <button onclick="exibirFormulario()">Adicione seu Doguinho</button>
+
+    <form id="formulario">
+        <label for="doguinho">Doguinho</label>
+        <input id="doguinho" name="cachorro" type="text">
+
+        <label for="dono">Dono</label>
+        <input id="dono" name="dono" type="text">
+
+        <label for="telefone">Telefone</label>
+        <input id="telefone" name="contato" type="text">
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email">
+
+        <button type="button" onclick="ocultarFormulario()">Cancelar</button>
+        <button type="submit">Salvar</button>
+    </form>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <td>Imagem</td>
+                <td>Doguinho</td>
+                <td>Dono</td>
+                <td>Telefone</td>
+                <td>Email</td>
+                <td>Ações</td>
+            </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+            <!-- dados da api -->
+        </tbody>
+    </table>
+</body>
+</html>
